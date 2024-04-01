@@ -110,15 +110,56 @@ class HospitalManagementSystem:
                 return True
         return False
 
-    def conduct_consultation(self, patient_id):
-        # Function to conduct consultation and remove the appointment
-        for appointment in list(self.appointment_queue):
-            if appointment[0] == patient_id:
-                self.appointment_queue.remove(appointment)
-                print(f"Consultation conducted for patient ID: {patient_id}.")
-                return True
-        print(f"No appointment found for patient ID: {patient_id}.")
-        return False
+
+    def add_patients_to_consultation_queue(self, num_patients):
+            """Add a specified number of patients to the consultation queue randomly from existing patients."""
+            if num_patients > len(self.patients):
+                print("Not enough patients to add to the consultation queue.")
+                return False
+
+            # Select random patient IDs
+            selected_patient_ids = random.sample(list(self.patients.keys()), num_patients)
+
+            # Add selected patients to the appointment queue
+            for patient_id in selected_patient_ids:
+                # Assuming all consultations are with a randomly selected doctor for simplicity
+                doctor_id = random.choice(list(self.doctors.keys()))
+                appointment_date = self.generate_random_date_from_today()
+                self.appointment_queue.append((patient_id, doctor_id, appointment_date))
+
+            print(f"Added {num_patients} patients to the consultation queue.")
+            return True
+
+    def conduct_consultation(self):
+        """Conducts consultations for the specified number of patients."""
+        # Ask for the number of patients to consult directly within the method
+        num_consultations = int(input("How many patients do you want to consult? "))
+
+        if len(self.appointment_queue) == 0:
+            print("There are currently no patients in the queue.")
+            return False, []
+
+        if len(self.appointment_queue) < num_consultations:
+            print(f"Only {len(self.appointment_queue)} patients are in the queue.")
+            proceed = input("Proceed with these consultations? (y/n): ")
+            if proceed.lower() != 'y':
+                return False, []
+            # Adjust the number of consultations to the available patients in the queue
+            num_consultations = len(self.appointment_queue)
+
+        consultations_conducted = []
+        for _ in range(num_consultations):
+            if self.appointment_queue:
+                patient_id, doctor_id, appointment_date = self.appointment_queue.popleft()
+                consultations_conducted.append(patient_id)
+                print(
+                    f"Consultation conducted for patient ID: {patient_id} with Doctor ID: {doctor_id} on {appointment_date}.")
+            else:
+                # This else clause is technically unnecessary given the earlier checks, but included for completeness
+                print("No more patients in the queue.")
+                break
+
+        return True, consultations_conducted
 
     def display_scheduled_appointments(self):
         if not self.appointment_queue:
@@ -152,11 +193,73 @@ class HospitalManagementSystem:
             return True
         return False
 
+    def binary_search_prescriptions(self, patient_id):
+        left, right = 0, len(self.prescriptions) - 1
+        prescriptions_for_patient = []
+
+        # Ensure that the prescriptions list is sorted by patient_id
+        self.prescriptions.sort(key=lambda p: p.patient_id)
+
+        # Binary search for the starting index of prescriptions for the patient_id
+        while left <= right:
+            mid = (left + right) // 2
+            if self.prescriptions[mid].patient_id == patient_id:
+                # Found a prescription for the patient, now gather all surrounding ones
+                index = mid
+                # Check to the left of mid
+                while index >= 0 and self.prescriptions[index].patient_id == patient_id:
+                    prescriptions_for_patient.append(self.prescriptions[index])
+                    index -= 1
+                # Check to the right of mid
+                index = mid + 1
+                while index < len(self.prescriptions) and self.prescriptions[index].patient_id == patient_id:
+                    prescriptions_for_patient.append(self.prescriptions[index])
+                    index += 1
+                break
+            elif self.prescriptions[mid].patient_id < patient_id:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return prescriptions_for_patient
+
+    def binary_search_prescriptions(self, patient_id):
+        left, right = 0, len(self.prescriptions) - 1
+        prescriptions_for_patient = []
+
+        # Ensure that the prescriptions list is sorted by patient_id
+        self.prescriptions.sort(key=lambda p: p.patient_id)
+
+        # Binary search for the starting index of prescriptions for the patient_id
+        while left <= right:
+            mid = (left + right) // 2
+            if self.prescriptions[mid].patient_id == patient_id:
+                # Found a prescription for the patient, now gather all surrounding ones
+                index = mid
+                # Check to the left of mid
+                while index >= 0 and self.prescriptions[index].patient_id == patient_id:
+                    prescriptions_for_patient.append(self.prescriptions[index])
+                    index -= 1
+                # Check to the right of mid
+                index = mid + 1
+                while index < len(self.prescriptions) and self.prescriptions[index].patient_id == patient_id:
+                    prescriptions_for_patient.append(self.prescriptions[index])
+                    index += 1
+                break
+            elif self.prescriptions[mid].patient_id < patient_id:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return prescriptions_for_patient
+
     def search_patient(self, patient_id):
+        prescriptions = self.binary_search_prescriptions(patient_id)
         if patient_id in self.patients:
             patient = self.patients[patient_id]
             prescriptions = [p for p in self.prescriptions if p.patient_id == patient_id]
-            prescription_info = [{"Prescription ID": p.prescription_id, "Medication": p.medication, "Dosage": p.dosage} for p in prescriptions]
+            prescription_info = [{"Prescription ID": p.prescription_id, "Medication": p.medication, "Dosage": p.dosage}
+                                 for p in prescriptions]
             patient_info = {
                 "Patient ID": patient.patient_id,
                 "Name": patient.name,
@@ -169,6 +272,7 @@ class HospitalManagementSystem:
             }
             return patient_info
         return None
+
 
 # User Interaction Functions
 def main_menu(hms):
@@ -255,17 +359,42 @@ def main_menu(hms):
             else:
                 print("Patient record not found.")
 
+
         elif choice == "7":
             print("\nCurrent Patients (sorted by ID):")
-            for i, (patient_id, patient) in enumerate(sorted(hms.patients.items(), key=lambda x: x[0]), 1):
-                print(f"{i}: ID: {patient_id}, Name: {patient.name}, Age: {patient.age}, Gender: {patient.gender.value}, Medical History: {patient.medical_history}, Current Condition: {patient.current_condition}")
+            sorted_patient_items = sorted(hms.patients.items())  # Sorts by the dictionary keys by default
+            for i, (patient_id, patient) in enumerate(sorted_patient_items, start=1):
+                print(
+                    f"{i}: ID: {patient_id}, Name: {patient.name}, Age: {patient.age}, Gender: {patient.gender.value}, Medical History: {patient.medical_history}, Current Condition: {patient.current_condition}")
+
+
+
 
         elif choice == "8":
-            patient_id = int(input("Enter patient ID for consultation: "))
-            if hms.conduct_consultation(patient_id):
-                print("Consultation successfully conducted.")
+
+            # Before conducting consultations, ensure there are appointments scheduled
+
+            if not hms.appointment_queue:
+                print("There are no scheduled appointments. Please schedule appointments first.")
+
+                continue  # Skip the rest of the loop and show the main menu again
+
+            success, consultations = hms.conduct_consultation()
+
+            if success and consultations:
+
+                print(
+                    f"Consultations successfully conducted for the following patient IDs: {', '.join(map(str, consultations))}")
+
+            elif success:
+
+                print("No consultations were conducted.")
+
             else:
-                print("Failed to conduct consultation. Patient might not have an appointment.")
+
+                print("Failed to conduct consultation.")
+
+
 
         elif choice == "9":
             hms.display_scheduled_appointments()
