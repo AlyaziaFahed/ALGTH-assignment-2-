@@ -13,7 +13,7 @@ class MedicalCondition(Enum):
     ASTHMA = 'Asthma'
     HYPERTENSION = 'Hypertension'
     INFLAMMATION = "inflammation"
-    OBESITY = "obseity"
+    OBESITY = "Obseity"
     KIDNEY_DISEASE = "kidney disease"
     LUNG_DISEASE = " lung disease"
     NONE = 'None'
@@ -223,35 +223,6 @@ class HospitalManagementSystem:
 
         return prescriptions_for_patient
 
-    def binary_search_prescriptions(self, patient_id):
-        left, right = 0, len(self.prescriptions) - 1
-        prescriptions_for_patient = []
-
-        # Ensure that the prescriptions list is sorted by patient_id
-        self.prescriptions.sort(key=lambda p: p.patient_id)
-
-        # Binary search for the starting index of prescriptions for the patient_id
-        while left <= right:
-            mid = (left + right) // 2
-            if self.prescriptions[mid].patient_id == patient_id:
-                # Found a prescription for the patient, now gather all surrounding ones
-                index = mid
-                # Check to the left of mid
-                while index >= 0 and self.prescriptions[index].patient_id == patient_id:
-                    prescriptions_for_patient.append(self.prescriptions[index])
-                    index -= 1
-                # Check to the right of mid
-                index = mid + 1
-                while index < len(self.prescriptions) and self.prescriptions[index].patient_id == patient_id:
-                    prescriptions_for_patient.append(self.prescriptions[index])
-                    index += 1
-                break
-            elif self.prescriptions[mid].patient_id < patient_id:
-                left = mid + 1
-            else:
-                right = mid - 1
-
-        return prescriptions_for_patient
 
     def search_patient(self, patient_id):
         prescriptions = self.binary_search_prescriptions(patient_id)
@@ -371,29 +342,19 @@ def main_menu(hms):
 
 
         elif choice == "8":
-
             # Before conducting consultations, ensure there are appointments scheduled
-
             if not hms.appointment_queue:
                 print("There are no scheduled appointments. Please schedule appointments first.")
-
                 continue  # Skip the rest of the loop and show the main menu again
 
             success, consultations = hms.conduct_consultation()
-
             if success and consultations:
-
                 print(
                     f"Consultations successfully conducted for the following patient IDs: {', '.join(map(str, consultations))}")
-
             elif success:
-
                 print("No consultations were conducted.")
-
             else:
-
                 print("Failed to conduct consultation.")
-
 
 
         elif choice == "9":
