@@ -132,11 +132,11 @@ class HospitalManagementSystem:
         return doctor_id
 
     def add_patient(self, name, age, gender, medical_history, current_condition):
-        # Generate a random patient ID between 1 and 999.
-        patient_id = random.randint(1, 999)
+        # Generate a random patient ID between 1 and 99999.
+        patient_id = random.randint(1, 99999)
         # Ensure that the generated patient ID is unique by checking existing patient IDs.
         while patient_id in self.patients:
-            patient_id = random.randint(1, 999)
+            patient_id = random.randint(1, 99999)
         # Capitalize the first letter of the gender input for consistency.
         gender = gender.capitalize()
         # Validate the gender input against predefined values in the Gender enum.
