@@ -428,23 +428,14 @@ def main_menu(hms):
 
 
         elif choice == "3":
-
             # Prompt user for patient and doctor IDs, medication, and dosage to issue a prescription.
-
             patient_id = int(input("Enter patient ID: "))
-
             doctor_id = int(input("Enter doctor ID: "))
-
             medication = input("Enter medication: ")
-
             dosage = input("Enter dosage: ")
-
             # Call function to create a prescription and return its ID.
-
             prescription_id = hms.issue_prescription(patient_id, doctor_id, medication, dosage)
-
             # Inform user of the successful creation of the prescription with its ID.
-
             print(f"Prescription issued with ID: {prescription_id}")
 
 
